@@ -2,7 +2,7 @@ name: Update community.txt
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Ежедневно в 00:00 UTC
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -17,18 +17,25 @@ jobs:
       - name: Скачать community.lst
         run: |
           curl -Lfs https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/community.lst -o community.txt
-          echo "Файл скачан, строк: $(wc -l < community.txt)"
+          echo "✅ Файл скачан:"
+          ls -la community.txt
+          echo "Первые 5 строк:"
+          head -5 community.txt
       
-      - name: Коммит изменений
+      - name: Проверить изменения и коммит
         run: |
           git config user.name "Update Bot"
           git config user.email "action@github.com"
           
-          if git diff --quiet community.txt; then
-            echo "Файл не изменился, пропускаем коммит"
-            exit 0
-          fi
+          echo "🔍 Статус до git diff:"
+          git status
           
-          git add community.txt
-          git commit -m "Обновить community.txt [$(date +'%Y-%m-%d')]"
-          git push
+          if git diff --quiet community.txt; then
+            echo "❌ Файл не изменился (возможно, уже существует)"
+          else
+            echo "✅ Есть изменения, делаем коммит"
+            git add community.txt
+            git commit -m "Обновить community.txt [$(date +'%Y-%m-%d')]"
+            git push
+            echo "✅ Пуш успешен"
+          fi
