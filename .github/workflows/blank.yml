@@ -2,9 +2,11 @@ name: Update community.txt
 
 on:
   schedule:
-    # Раз в сутки в 00:00 UTC (настрой по вкусу, см. crontab.guru)
-    - cron: '0 0 * * *'
-  workflow_dispatch:  # Для ручного запуска
+    - cron: '0 0 * * *'  # Ежедневно в 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update:
@@ -12,21 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Скачать и сохранить файл
+      - name: Скачать community.lst
         run: |
-          curl -s https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/community.lst -o community.txt
+          curl -Lfs https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/community.lst -o community.txt
+          echo "Файл скачан, строк: $(wc -l < community.txt)"
       
-      - name: Проверить изменения
+      - name: Коммит изменений
         run: |
+          git config user.name "Update Bot"
+          git config user.email "action@github.com"
+          
           if git diff --quiet community.txt; then
-            echo "Нет изменений"
+            echo "Файл не изменился, пропускаем коммит"
             exit 0
           fi
-      
-      - name: Коммит и пуш
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
+          
           git add community.txt
-          git commit -m "Обновить community.txt из upstream [$(date +'%Y-%m-%d')]"
+          git commit -m "Обновить community.txt [$(date +'%Y-%m-%d')]"
           git push
